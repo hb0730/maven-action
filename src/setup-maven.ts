@@ -7,11 +7,11 @@ import {
 
 export async function setupMaven(): Promise<void> {
   try {
-    const mavenVersion = core.getInput('maven_version')
+    const mavenVersion = core.getInput('maven-version')
     if (mavenVersion.length == 0) {
-      core.setFailed('Please set maven_version')
+      core.setFailed('Please set maven-version')
     }
-    const mavenFile = core.getInput('maven_file')
+    const mavenFile = core.getInput('maven-file')
     const mavenUrl = core.getInput('url')
     if (mavenFile) {
       installExtractedMaven(mavenFile, mavenVersion)
@@ -20,7 +20,7 @@ export async function setupMaven(): Promise<void> {
     } else if (mavenVersion) {
       installMaven(mavenVersion)
     } else {
-      core.setFailed('Please set maven_file or url or maven_version')
+      core.setFailed('Please set maven-file or url or maven-version')
     }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
