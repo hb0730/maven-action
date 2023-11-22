@@ -1,8 +1,7 @@
-# Explicitly not ignoring node_modules so that they are included in package downloaded by runner
-!node_modules/
-__tests__/runner/*
+# Dependency directory
+node_modules
 
-# Rest of the file pulled from https://github.com/github/gitignore/blob/master/Node.gitignore
+# Rest pulled from https://github.com/github/gitignore/blob/master/Node.gitignore
 # Logs
 logs
 *.log
@@ -90,3 +89,11 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Ignore built ts files
+__tests__/runner/*
+lib/**/*
