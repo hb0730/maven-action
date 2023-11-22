@@ -28212,7 +28212,7 @@ async function installDownloadedMaven(mavenUrl, mavenVersion) {
             throw new Error(`url ${mavenUrl} is not a file`);
         }
         core.info(`Extracting Maven from  ${mavenFilePath}`);
-        const extractedMavenPath = await extractMaven(mavenFilePath);
+        const extractedMavenPath = await extractMaven(mavenFilePath, getExtension(mavenUrl));
         const archiveName = fs_1.default.readdirSync(extractedMavenPath)[0];
         const archivePath = path_1.default.join(extractedMavenPath, archiveName);
         const version = mavenVersion;
@@ -28233,15 +28233,15 @@ async function installMaven(mavenVersion) {
         core.info(`maven ${mavenVersion} already installed at ${toolPath}`);
     }
     else {
-        core.info(`Maven ${mavenVersion} not found, installing from https://archive.apache.org/dist/maven/maven-3/${mavenVersion}/binaries/apache-maven-${mavenVersion}-bin.tar.gz`);
-        const mavenUrl = `https://archive.apache.org/dist/maven/maven-3/${mavenVersion}/binaries/apache-maven-${mavenVersion}-bin.tar.gz`;
+        const mavenUrl = getDownloadArchiveUrl(mavenVersion);
+        core.info(`Maven ${mavenVersion} not found, installing from ${mavenUrl}`);
         const mavenFilePath = await tc.downloadTool(mavenUrl);
         const stats = fs_1.default.statSync(mavenFilePath);
         if (!stats.isFile()) {
             throw new Error(`maven_url ${mavenUrl} is not a file`);
         }
         core.info(`Extracting Maven from  ${mavenFilePath}`);
-        const extractedMavenPath = await extractMaven(mavenFilePath);
+        const extractedMavenPath = await extractMaven(mavenFilePath, getDownloadArchiveExtension());
         const archiveName = fs_1.default.readdirSync(extractedMavenPath)[0];
         const archivePath = path_1.default.join(extractedMavenPath, archiveName);
         const version = mavenVersion;
@@ -28272,6 +28272,21 @@ async function extractMaven(toolPath, extension) {
         default:
             return await tc.extract7z(toolPath);
     }
+}
+function getDownloadArchiveUrl(version) {
+    let url = `https://archive.apache.org/dist/maven/maven-3/${version}/binaries/apache-maven-${version}-bin`;
+    let extension = getDownloadArchiveExtension();
+    return `${url}.${extension}`;
+}
+function getDownloadArchiveExtension() {
+    return process.platform === 'win32' ? 'zip' : 'tar.gz';
+}
+function getExtension(url) {
+    const extension = url.endsWith('.tar.gz') ? 'tar.gz' : path_1.default.extname(url);
+    if (extension.startsWith('.')) {
+        return extension.substring(1);
+    }
+    return extension;
 }
 function setMavenDefault(version, toolPath) {
     // set maven env variable

@@ -77,7 +77,10 @@ export async function installDownloadedMaven(
       throw new Error(`url ${mavenUrl} is not a file`)
     }
     core.info(`Extracting Maven from  ${mavenFilePath}`)
-    const extractedMavenPath = await extractMaven(mavenFilePath)
+    const extractedMavenPath = await extractMaven(
+      mavenFilePath,
+      getExtension(mavenUrl)
+    )
     const archiveName = fs.readdirSync(extractedMavenPath)[0]
     const archivePath = path.join(extractedMavenPath, archiveName)
     const version = mavenVersion
@@ -97,17 +100,18 @@ export async function installMaven(mavenVersion: string) {
   if (toolPath) {
     core.info(`maven ${mavenVersion} already installed at ${toolPath}`)
   } else {
-    core.info(
-      `Maven ${mavenVersion} not found, installing from https://archive.apache.org/dist/maven/maven-3/${mavenVersion}/binaries/apache-maven-${mavenVersion}-bin.tar.gz`
-    )
-    const mavenUrl = `https://archive.apache.org/dist/maven/maven-3/${mavenVersion}/binaries/apache-maven-${mavenVersion}-bin.tar.gz`
+    const mavenUrl = getDownloadArchiveUrl(mavenVersion)
+    core.info(`Maven ${mavenVersion} not found, installing from ${mavenUrl}`)
     const mavenFilePath = await tc.downloadTool(mavenUrl)
     const stats = fs.statSync(mavenFilePath)
     if (!stats.isFile()) {
       throw new Error(`maven_url ${mavenUrl} is not a file`)
     }
     core.info(`Extracting Maven from  ${mavenFilePath}`)
-    const extractedMavenPath = await extractMaven(mavenFilePath)
+    const extractedMavenPath = await extractMaven(
+      mavenFilePath,
+      getDownloadArchiveExtension()
+    )
     const archiveName = fs.readdirSync(extractedMavenPath)[0]
     const archivePath = path.join(extractedMavenPath, archiveName)
     const version = mavenVersion
@@ -138,6 +142,21 @@ async function extractMaven(toolPath: string, extension?: string) {
     default:
       return await tc.extract7z(toolPath)
   }
+}
+function getDownloadArchiveUrl(version: string) {
+  let url = `https://archive.apache.org/dist/maven/maven-3/${version}/binaries/apache-maven-${version}-bin`
+  let extension = getDownloadArchiveExtension()
+  return `${url}.${extension}`
+}
+function getDownloadArchiveExtension() {
+  return process.platform === 'win32' ? 'zip' : 'tar.gz'
+}
+function getExtension(url: string) {
+  const extension = url.endsWith('.tar.gz') ? 'tar.gz' : path.extname(url)
+  if (extension.startsWith('.')) {
+    return extension.substring(1)
+  }
+  return extension
 }
 function setMavenDefault(version: string, toolPath: string) {
   // set maven env variable
