@@ -1,16 +1,21 @@
-name: 'Setup Maven'
+name: 'Maven Action'
 description: 'Install a specific version of Apache Maven and add it to the PATH'
-author: 'stCarolas'
+author: 'hb0730'
 inputs:
   maven-file:
     description: 'Path to the Maven archive to download'
     default: ''
   url:
     description: 'URL to download Maven from'
-    default: 'https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.2/apache-maven-3.8.2-bin.tar.gz'
+    default: ''
   maven-version:
     description: 'Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0'
     default: '3.8.2'
 runs:
   using: 'node16'
   main: 'dist/index.js'
+
+branding:
+  color: 'purple'
+  icon: 'play-circle'
+  
