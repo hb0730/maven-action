@@ -2,15 +2,15 @@ name: 'Setup Maven'
 description: 'Install a specific version of Apache Maven and add it to the PATH'
 author: 'stCarolas'
 inputs:
-  mavenFile:
+  maven_file:
     description: 'Path to the Maven archive to download'
     default: ''
   url:
     description: 'URL to download Maven from'
     default: 'https://apache.osuosl.org/maven/maven-3/3.8.2/binaries/apache-maven-3.8.2-bin.tar.gz'
-  maven-version:
+  maven_version:
     description: 'Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0'
     default: '3.8.2'
 runs:
   using: 'node16'
-  main: 'lib/setup-maven.js'
+  main: 'dist/index.js'
