@@ -22,11 +22,11 @@ jobs:
       - name: Download Maven
         run: |
           download_url='https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.2/apache-maven-3.8.2-bin.tar.gz'
-          wget -O ~/apache-maven-3.8.2-bin.tar.gz $download_url
+          wget -O ${{ runner.temp }}/apache-maven-3.8.2-bin.tar.gz $download_url
       - name: Maven  Action Test
         uses: ./
         with:
-          maven-file: /root/apache-maven-3.8.2-bin.tar.gz
+          maven-file: ${{ runner.temp }}/apache-maven-3.8.2-bin.tar.gz
           maven-version: 3.8.2
   url-test:
     runs-on: ubuntu-latest
