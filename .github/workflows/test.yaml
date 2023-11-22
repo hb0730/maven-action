@@ -28,6 +28,8 @@ jobs:
         with:
           maven-file: ${{ runner.temp }}/apache-maven-3.8.2-bin.tar.gz
           maven-version: 3.8.2
+      - name: Maven Run
+        run: mvn --version
   url-test:
     runs-on: ubuntu-latest
     steps:
@@ -37,3 +39,5 @@ jobs:
         with:
           url: 'https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.2/apache-maven-3.8.2-bin.tar.gz'
           maven-version: 3.8.2
+      - name: Maven Run
+        run: mvn --version
