@@ -1,48 +1,33 @@
-// Load tempDirectory before it gets wiped by tool-cache
-let tempDirectory = process.env['RUNNER_TEMPDIRECTORY'] || ''
-
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
 import path from 'path'
 import fs from 'fs'
 
 const MACOS_JAVA_CONTENT_POSTFIX = 'Contents/Home'
-
-if (!tempDirectory) {
-  let baseLocation: string
-  if (process.platform === 'win32') {
-    baseLocation = process.env['USERPROFILE'] || 'C:\\'
-  } else {
-    if (process.platform === 'darwin') {
-      baseLocation = '/Users'
-    } else {
-      baseLocation = '/home'
-    }
-  }
-  tempDirectory = path.join(baseLocation, 'actions', 'temp')
-}
-
 export interface MavenOptions {
   mavenFile: string
   url: string
   mavenVersion: string
 }
+
 export async function installExtractedMaven(
   mavenFile: string,
   mavenVersion: string
 ) {
   let toolPath = tc.find('maven', mavenVersion)
   if (toolPath) {
-    core.info(`maven ${mavenVersion} already installed at ${toolPath}`)
+    core.info(`Resolved Maven ${mavenVersion} from tool-cache`)
   } else {
-    core.info(`Maven ${mavenVersion} not found, extracting ${mavenFile}`)
+    core.info(
+      `Maven ${mavenVersion} was not found in tool-cache, Trying to unpack from ${mavenFile}`
+    )
     if (!mavenFile) {
-      throw new Error('Please set maven_file')
+      throw new Error('mavenFile is not specified')
     }
     const mavenFilePath = path.resolve(mavenFile)
     const stats = fs.statSync(mavenFilePath)
     if (!stats.isFile()) {
-      throw new Error(`maven_file ${mavenFile} is not a file`)
+      throw new Error(`maven file was not found in path ${mavenFilePath}`)
     }
     core.info(`Extracting Maven from  ${mavenFilePath}`)
     const extractedMavenPath = await extractMaven(mavenFilePath)
@@ -57,7 +42,7 @@ export async function installExtractedMaven(
   }
   core.info(`Setting Maven ${mavenVersion} as default`)
   setMavenDefault(mavenVersion, toolPath)
-  return toolPath
+  return {toolPath, version: mavenVersion}
 }
 export async function installDownloadedMaven(
   mavenUrl: string,
@@ -65,16 +50,18 @@ export async function installDownloadedMaven(
 ) {
   let toolPath = tc.find('maven', mavenVersion)
   if (toolPath) {
-    core.info(`maven ${mavenVersion} already installed at ${toolPath}`)
+    core.info(`Resolved Maven ${mavenVersion} from tool-cache`)
   } else {
-    core.info(`Maven ${mavenVersion} not found, downloading from ${mavenUrl}`)
+    core.info(
+      `Maven ${mavenVersion} was not found in tool-cache, Trying to download from ${mavenUrl}`
+    )
     if (!mavenUrl) {
-      throw new Error('Please set url')
+      throw new Error('maven download url is not specified')
     }
     const mavenFilePath = await tc.downloadTool(mavenUrl)
     const stats = fs.statSync(mavenFilePath)
     if (!stats.isFile()) {
-      throw new Error(`url ${mavenUrl} is not a file`)
+      throw new Error(`maven download url ${mavenUrl} is not a file`)
     }
     core.info(`Extracting Maven from  ${mavenFilePath}`)
     const extractedMavenPath = await extractMaven(
@@ -92,20 +79,27 @@ export async function installDownloadedMaven(
   }
   core.info(`Setting Maven ${mavenVersion} as default`)
   setMavenDefault(mavenVersion, toolPath)
-  return toolPath
+  return {
+    toolPath,
+    version: mavenVersion
+  }
 }
 
 export async function installMaven(mavenVersion: string) {
   let toolPath = tc.find('maven', mavenVersion)
   if (toolPath) {
-    core.info(`maven ${mavenVersion} already installed at ${toolPath}`)
+    core.info(`Resolved Maven ${mavenVersion} from tool-cache`)
   } else {
+    core.info(
+      `Maven ${mavenVersion} was not found in tool-cache, Trying to download from ${getDownloadArchiveUrl(
+        mavenVersion
+      )}`
+    )
     const mavenUrl = getDownloadArchiveUrl(mavenVersion)
-    core.info(`Maven ${mavenVersion} not found, installing from ${mavenUrl}`)
     const mavenFilePath = await tc.downloadTool(mavenUrl)
     const stats = fs.statSync(mavenFilePath)
     if (!stats.isFile()) {
-      throw new Error(`maven_url ${mavenUrl} is not a file`)
+      throw new Error(`maven download url ${mavenUrl} is not a file`)
     }
     core.info(`Extracting Maven from  ${mavenFilePath}`)
     const extractedMavenPath = await extractMaven(
@@ -123,7 +117,10 @@ export async function installMaven(mavenVersion: string) {
   }
   core.info(`Setting Maven ${mavenVersion} as default`)
   setMavenDefault(mavenVersion, toolPath)
-  return toolPath
+  return {
+    toolPath,
+    version: mavenVersion
+  }
 }
 
 async function extractMaven(toolPath: string, extension?: string) {

@@ -13,15 +13,26 @@ export async function setupMaven(): Promise<void> {
     }
     const mavenFile = core.getInput('maven-file')
     const mavenUrl = core.getInput('url')
+    let outputs = {
+      version: '',
+      toolPath: ''
+    }
     if (mavenFile) {
-      installExtractedMaven(mavenFile, mavenVersion)
+      outputs = await installExtractedMaven(mavenFile, mavenVersion)
     } else if (mavenUrl) {
-      installDownloadedMaven(mavenUrl, mavenVersion)
+      outputs = await installDownloadedMaven(mavenUrl, mavenVersion)
     } else if (mavenVersion) {
-      installMaven(mavenVersion)
+      outputs = await installMaven(mavenVersion)
     } else {
       core.setFailed('Please set maven-file or url or maven-version')
     }
+    core.info('')
+    core.info('Setup maven complete')
+    core.info(`version: ${outputs.version}`)
+    core.info(`path: ${outputs.toolPath}`)
+    core.info("You can run 'mvn -v' to check maven version")
+    core.setOutput('version', outputs.version)
+    core.setOutput('path', outputs.toolPath)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

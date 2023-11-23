@@ -28143,42 +28143,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.installMaven = exports.installDownloadedMaven = exports.installExtractedMaven = void 0;
-// Load tempDirectory before it gets wiped by tool-cache
-let tempDirectory = process.env['RUNNER_TEMPDIRECTORY'] || '';
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const MACOS_JAVA_CONTENT_POSTFIX = 'Contents/Home';
-if (!tempDirectory) {
-    let baseLocation;
-    if (process.platform === 'win32') {
-        baseLocation = process.env['USERPROFILE'] || 'C:\\';
-    }
-    else {
-        if (process.platform === 'darwin') {
-            baseLocation = '/Users';
-        }
-        else {
-            baseLocation = '/home';
-        }
-    }
-    tempDirectory = path_1.default.join(baseLocation, 'actions', 'temp');
-}
 async function installExtractedMaven(mavenFile, mavenVersion) {
     let toolPath = tc.find('maven', mavenVersion);
     if (toolPath) {
-        core.info(`maven ${mavenVersion} already installed at ${toolPath}`);
+        core.info(`Resolved Maven ${mavenVersion} from tool-cache`);
     }
     else {
-        core.info(`Maven ${mavenVersion} not found, extracting ${mavenFile}`);
+        core.info(`Maven ${mavenVersion} was not found in tool-cache, Trying to unpack from ${mavenFile}`);
         if (!mavenFile) {
-            throw new Error('Please set maven_file');
+            throw new Error('mavenFile is not specified');
         }
         const mavenFilePath = path_1.default.resolve(mavenFile);
         const stats = fs_1.default.statSync(mavenFilePath);
         if (!stats.isFile()) {
-            throw new Error(`maven_file ${mavenFile} is not a file`);
+            throw new Error(`maven file was not found in path ${mavenFilePath}`);
         }
         core.info(`Extracting Maven from  ${mavenFilePath}`);
         const extractedMavenPath = await extractMaven(mavenFilePath);
@@ -28193,23 +28176,23 @@ async function installExtractedMaven(mavenFile, mavenVersion) {
     }
     core.info(`Setting Maven ${mavenVersion} as default`);
     setMavenDefault(mavenVersion, toolPath);
-    return toolPath;
+    return { toolPath, version: mavenVersion };
 }
 exports.installExtractedMaven = installExtractedMaven;
 async function installDownloadedMaven(mavenUrl, mavenVersion) {
     let toolPath = tc.find('maven', mavenVersion);
     if (toolPath) {
-        core.info(`maven ${mavenVersion} already installed at ${toolPath}`);
+        core.info(`Resolved Maven ${mavenVersion} from tool-cache`);
     }
     else {
-        core.info(`Maven ${mavenVersion} not found, downloading from ${mavenUrl}`);
+        core.info(`Maven ${mavenVersion} was not found in tool-cache, Trying to download from ${mavenUrl}`);
         if (!mavenUrl) {
-            throw new Error('Please set url');
+            throw new Error('maven download url is not specified');
         }
         const mavenFilePath = await tc.downloadTool(mavenUrl);
         const stats = fs_1.default.statSync(mavenFilePath);
         if (!stats.isFile()) {
-            throw new Error(`url ${mavenUrl} is not a file`);
+            throw new Error(`maven download url ${mavenUrl} is not a file`);
         }
         core.info(`Extracting Maven from  ${mavenFilePath}`);
         const extractedMavenPath = await extractMaven(mavenFilePath, getExtension(mavenUrl));
@@ -28224,21 +28207,24 @@ async function installDownloadedMaven(mavenUrl, mavenVersion) {
     }
     core.info(`Setting Maven ${mavenVersion} as default`);
     setMavenDefault(mavenVersion, toolPath);
-    return toolPath;
+    return {
+        toolPath,
+        version: mavenVersion
+    };
 }
 exports.installDownloadedMaven = installDownloadedMaven;
 async function installMaven(mavenVersion) {
     let toolPath = tc.find('maven', mavenVersion);
     if (toolPath) {
-        core.info(`maven ${mavenVersion} already installed at ${toolPath}`);
+        core.info(`Resolved Maven ${mavenVersion} from tool-cache`);
     }
     else {
+        core.info(`Maven ${mavenVersion} was not found in tool-cache, Trying to download from ${getDownloadArchiveUrl(mavenVersion)}`);
         const mavenUrl = getDownloadArchiveUrl(mavenVersion);
-        core.info(`Maven ${mavenVersion} not found, installing from ${mavenUrl}`);
         const mavenFilePath = await tc.downloadTool(mavenUrl);
         const stats = fs_1.default.statSync(mavenFilePath);
         if (!stats.isFile()) {
-            throw new Error(`maven_url ${mavenUrl} is not a file`);
+            throw new Error(`maven download url ${mavenUrl} is not a file`);
         }
         core.info(`Extracting Maven from  ${mavenFilePath}`);
         const extractedMavenPath = await extractMaven(mavenFilePath, getDownloadArchiveExtension());
@@ -28253,7 +28239,10 @@ async function installMaven(mavenVersion) {
     }
     core.info(`Setting Maven ${mavenVersion} as default`);
     setMavenDefault(mavenVersion, toolPath);
-    return toolPath;
+    return {
+        toolPath,
+        version: mavenVersion
+    };
 }
 exports.installMaven = installMaven;
 async function extractMaven(toolPath, extension) {
@@ -28339,18 +28328,29 @@ async function setupMaven() {
         }
         const mavenFile = core.getInput('maven-file');
         const mavenUrl = core.getInput('url');
+        let outputs = {
+            version: '',
+            toolPath: ''
+        };
         if (mavenFile) {
-            (0, installer_1.installExtractedMaven)(mavenFile, mavenVersion);
+            outputs = await (0, installer_1.installExtractedMaven)(mavenFile, mavenVersion);
         }
         else if (mavenUrl) {
-            (0, installer_1.installDownloadedMaven)(mavenUrl, mavenVersion);
+            outputs = await (0, installer_1.installDownloadedMaven)(mavenUrl, mavenVersion);
         }
         else if (mavenVersion) {
-            (0, installer_1.installMaven)(mavenVersion);
+            outputs = await (0, installer_1.installMaven)(mavenVersion);
         }
         else {
             core.setFailed('Please set maven-file or url or maven-version');
         }
+        core.info('');
+        core.info('Setup maven complete');
+        core.info(`version: ${outputs.version}`);
+        core.info(`path: ${outputs.toolPath}`);
+        core.info("You can run 'mvn -v' to check maven version");
+        core.setOutput('version', outputs.version);
+        core.setOutput('path', outputs.toolPath);
     }
     catch (error) {
         if (error instanceof Error)

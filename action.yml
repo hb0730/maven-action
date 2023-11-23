@@ -11,6 +11,11 @@ inputs:
   maven-version:
     description: 'Version Spec of the version to use.  Examples: 10.x, 10.15.1, >=10.15.0'
     default: '3.8.2'
+outputs:
+  version:
+    description: 'Installed maven version'
+  path:
+    description: 'Path to where maven environment has been installed (sam as $MAVEN_HOME)'
 runs:
   using: 'node16'
   main: 'dist/index.js'
