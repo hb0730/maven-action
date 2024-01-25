@@ -17,7 +17,7 @@ outputs:
   path:
     description: 'Path to where maven environment has been installed (sam as $MAVEN_HOME)'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
 
 branding:
