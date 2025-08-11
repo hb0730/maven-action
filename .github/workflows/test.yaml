@@ -4,7 +4,7 @@ jobs:
   version-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Maven  Action Test
         uses: ./
         with:
@@ -14,7 +14,7 @@ jobs:
   file-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download Maven
         run: |
           download_url='https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.2/apache-maven-3.8.2-bin.tar.gz'
@@ -29,7 +29,7 @@ jobs:
   url-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Maven  Action Test
         uses: ./
         with:
